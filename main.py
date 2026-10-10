@@ -1,5 +1,6 @@
 from simulation.robot import Robot
 from simulation.sensor import Encoder , IMU
+from filters.kalman import KalmanFilter
 import matplotlib.pyplot as plt
 import math
 
@@ -42,6 +43,16 @@ fused_theta = robot.theta
 fused_theta_values = []
 alpha = 0.68
 
+kf = KalmanFilter(
+    initial_estimate=0.0,
+    initial_uncertainty=0.1,
+    process_noise=0.0001,
+    measurement_noise=0.00222
+)
+kf_w_values = []
+kf_theta = robot.theta
+kf_theta_values = []
+
 for i in range(420):
     t = i * dt
     time_values.append(t)
@@ -54,6 +65,11 @@ for i in range(420):
     vl , vr = encoder.get_enc_data(robot)
     est_v = (vr+vl)/2
     est_w = (vr-vl)/encoder.wheel_base
+    kf.predict()
+    kf.update(est_w)
+    kf_w_values.append(kf.state)
+    kf_theta += kf.state * dt
+    kf_theta_values.append(kf_theta)
     
     enc_x = enc_x + est_v*math.cos(enc_theta)*dt
     enc_y = enc_y + est_v*math.sin(enc_theta)*dt
@@ -138,6 +154,7 @@ plt.plot(time_values, theta_values, label="Ground Truth")
 plt.plot(time_values, imu_theta_values, label="Gyro")
 plt.plot(time_values, enc_theta_values, label="Encoder")
 plt.plot(time_values, fused_theta_values, label="fused theta")
+plt.plot(time_values, kf_theta_values, label="kf theta")
 
 plt.plot(time_values, enc_error_values, label="encoder error")
 plt.plot(time_values, gyro_error_values, label="gyro error")
@@ -151,9 +168,10 @@ plt.grid()
 plt.figure()
 
 plt.plot(time_values, enc_w_values, label="Encoder")
-plt.plot(time_values, imu_w_values, label="Gyro")
+# plt.plot(time_values, imu_w_values, label="Gyro")
 plt.plot(time_values, angular_velocity_values, label="Ground Truth")
-plt.plot(time_values, fused_w_values, label="fused w")
+# plt.plot(time_values, fused_w_values, label="fused w")
+plt.plot(time_values, kf_w_values, label="kf w")
 
 plt.xlabel("Time (s)")
 plt.ylabel("w (rad/s)")
