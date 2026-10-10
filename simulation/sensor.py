@@ -4,7 +4,7 @@ class Encoder:
     def __init__(self, wheel_base = 0.3):
         self.wheel_base = wheel_base
         self.vl_bias = 0.002
-        self.vr_bias = -0.002
+        self.vr_bias = -0.001
         self.sigma = 0.01
     
     def get_enc_data(self,robot):
